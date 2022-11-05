@@ -4,7 +4,7 @@ import numpy as np
 from .mol_utils import get_atom_ids, get_bond_list
 
 
-def calc_mol_volume(mol):
+def calc_mol_volume(mol, van_dict=atom_van_dict):
     conf = mol.GetConformers()[0]
     atom_ids = get_atom_ids(mol)
 
@@ -13,22 +13,23 @@ def calc_mol_volume(mol):
     V = 0
 
     for target_atom_id in atom_ids:
-        dV = calc_dVA(mol, conf, bond_list, target_atom_id, repeat_bond)
+        dV = calc_dVA(mol, conf, bond_list, target_atom_id,
+                      repeat_bond, van_dict=van_dict)
         V += dV
         # print("dV",target_atom_id,dV)
 
     return 0.602*V
 
 
-def calc_s(mol, conf, bond, repeat_bond=[]):
+def calc_s(mol, conf, bond, repeat_bond=[], van_dict=atom_van_dict):
 
     atom_id1 = bond[0]
     atom_id2 = bond[1]
     atom1 = mol.GetAtomWithIdx(atom_id1).GetSymbol()
     atom2 = mol.GetAtomWithIdx(atom_id2).GetSymbol()
 
-    Ri = atom_van_dict[atom1]
-    Rj = atom_van_dict[atom2]
+    Ri = van_dict[atom1]
+    Rj = van_dict[atom2]
 
     if set(repeat_bond) == set((atom_id1, atom_id2)):
         # const length for repeating bond
@@ -41,7 +42,7 @@ def calc_s(mol, conf, bond, repeat_bond=[]):
     return s, Ri
 
 
-def calc_dVA(mol, conf, bond_list, target_atom_id, repeat_bond):
+def calc_dVA(mol, conf, bond_list, target_atom_id, repeat_bond, van_dict):
 
     sigma = 0
     neighbor_atom_bonds_set = [
@@ -56,7 +57,7 @@ def calc_dVA(mol, conf, bond_list, target_atom_id, repeat_bond):
         neighbor_atom_bonds.append(bond)
 
     for bond in neighbor_atom_bonds:
-        s, Ri = calc_s(mol, conf, bond, repeat_bond)
+        s, Ri = calc_s(mol, conf, bond, repeat_bond, van_dict)
         #print(s,  bond)
         sigma += s
 
